@@ -130,13 +130,17 @@ async def get_video_info(request: Request, url: str):
     if not is_valid_url(url):
         raise HTTPException(status_code=400, detail="Invalid URL. Only YouTube and TikTok are supported.")
 
+    ffmpeg_exec = './ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
     ydl_opts = {
         'quiet': True,
         'skip_download': True,
         'no_warnings': True,
         'extract_flat': 'in_playlist',
-        'ffmpeg_location': './ffmpeg.exe',
+        'ffmpeg_location': ffmpeg_exec,
     }
+    
+    if os.path.exists('cookies.txt'):
+        ydl_opts['cookiefile'] = 'cookies.txt'
 
     def fetch_info():
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -211,11 +215,14 @@ def download_video_sync(url: str, format_id: str, embed_subs: bool, start_time: 
 
     file_path = os.path.join(DOWNLOAD_DIR, f"{task_id}.%(ext)s")
     
+    import os
+    ffmpeg_exec = './ffmpeg.exe' if os.name == 'nt' else 'ffmpeg'
+    
     # Common opts
     opts = {
         'outtmpl': file_path,
         'progress_hooks': [hook],
-        'ffmpeg_location': './ffmpeg.exe',
+        'ffmpeg_location': ffmpeg_exec,
         'max_filesize': MAX_FILE_SIZE,
         'noplaylist': True,
     }
